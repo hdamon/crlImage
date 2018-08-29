@@ -134,20 +134,22 @@ classdef NRRD < crlBase.baseFileObj & matlab.mixin.Copyable
       obj = obj@crlBase.baseFileObj(p.Results.fname,p.Results.fpath,...
                                       p.Unmatched);      
       
-      %% Assign Properties
-      % If a crlEEG.fileio.NRRD object was 
-      if isa(varargin{1},'crlImage.fileio.NRRD')    
-        obj.copyFields(varargin{1});
-        return;
-      end;
+      if nargin>0
+        %% Assign Properties
+        % If a crlEEG.fileio.NRRD object was
+        if isa(varargin{1},'crlImage.fileio.NRRD')
+          obj.copyFields(varargin{1});
+          return;
+        end;
+        
+        % If the NRRD file exists on disk, read the header.
+        if obj.existsOnDisk
+          obj.read;
+        else
+          disp(['NRRD not located on disk. Creating empty object']);
+        end;
       
-      % If the NRRD file exists on disk, read the header.
-      if obj.existsOnDisk
-        obj.read;
-      else
-        disp(['NRRD not located on disk. Creating empty object']);
       end;
-      
     end
     
     function read(obj)
@@ -240,7 +242,7 @@ classdef NRRD < crlBase.baseFileObj & matlab.mixin.Copyable
     function out = get.data(obj)
       if ~obj.hasData
         try
-          crlEEG.disp(['Reading Data for ' obj.fname ]);
+          crlBase.disp(['Reading Data for ' obj.fname ]);
           obj.readData;
           obj.hasData = true;
         catch
@@ -267,11 +269,11 @@ classdef NRRD < crlBase.baseFileObj & matlab.mixin.Copyable
       %
       dataSize = size(val);
       if all(dataSize==0)
-        crlEEG.disp('Clearing data field');
+        crlBase.disp('Clearing data field');
         obj.data = '???';
         obj.hasData = false;
       elseif strcmpi(val,'???');
-        crlEEG.disp('Setting default data field');
+        crlBase.disp('Setting default data field');
         obj.data = val;
         obj.hasData = false;
       elseif (numel(dataSize)==numel(obj.sizes))&&all(dataSize==obj.sizes)

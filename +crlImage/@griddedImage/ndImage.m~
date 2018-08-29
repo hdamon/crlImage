@@ -1,0 +1,37 @@
+classdef ndImage < labelledArray
+  
+  properties (Dependent=true)
+    spaceGrid
+  end
+  
+  properties
+    spaceGrid_    
+  end
+  
+  methods
+    
+    function obj = ndImage(varargin)
+      
+      obj = obj@labelledArray;
+      
+      if nargin>0
+        p = inputParser;
+        p.addRequired('data',@(x) isnumeric(x)||isa(x,'crlI
+        
+        
+      end      
+    end
+    
+    function out = get.spaceGrid(obj)
+      out = obj.spaceGrid_;
+    end;
+    
+    function set.spaceGrid(obj,val)
+      obj.spaceGrid_ = val;
+    end;
+    
+  end
+  
+end
+
+ 
