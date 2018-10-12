@@ -30,6 +30,7 @@ classdef sliceViewer < guiTools.uipanel
     renderers
     axis
     slice
+    zoom
   end
   
   properties (Hidden = true)    
@@ -39,6 +40,7 @@ classdef sliceViewer < guiTools.uipanel
   properties (Access=protected)
     ax_
     renderers_
+    zoom_
     listeners_
     tabCont
     tabs
@@ -48,17 +50,19 @@ classdef sliceViewer < guiTools.uipanel
   
   methods
     
-    function obj = sliceViewer(volumes,varargin)
-      
-      
+    function obj = sliceViewer(varargin)
+            
+      %% Input Parsing
       p = inputParser;
       p.KeepUnmatched = true;
+      p.addOptional('volumes',[]);
       p.addParameter('Parent',[]);
       p.parse(varargin{:});
       
       parent = p.Results.Parent;
       if isempty(parent), parent = figure; end;
       
+      volumes = p.Results.volumes;
       
       %% Initialize Main Panel
       obj = obj@guiTools.uipanel('Parent',parent,p.Unmatched);
@@ -82,7 +86,9 @@ classdef sliceViewer < guiTools.uipanel
         'Position',[0.02 0 0.98 0.1]);
       
       % Initialize Renderers
-      obj.renderers = volumes.sliceRenderer;
+      if ~isempty(p.Results.volumes)
+        obj.renderers = p.Results.volumes.sliceRenderer;
+      end;
 
       % Default Color Layering
       if numel(obj.renderers)>1
@@ -94,13 +100,7 @@ classdef sliceViewer < guiTools.uipanel
               
       % Add Listeners
       obj.listeners_{1} = addlistener(obj.sliceControl,'updatedOut',...
-                            @(h,evt) obj.renderSlice);
-      for i = 1:numel(obj.renderers)
-        obj.listeners_{end+1} = ...
-              addlistener(obj.renderers(i),'updatedOut',...
-                            @(h,evt) obj.renderSlice);
-      end
-      
+                            @(h,evt) obj.renderSlice);     
       obj.renderSlice;
      
     end
@@ -113,7 +113,19 @@ classdef sliceViewer < guiTools.uipanel
     end;
     
     function set.renderers(obj,val)
-      obj.renderers_ = val;
+      if ~isequal(obj.renderers_,val)        
+        obj.renderers_ = val;
+        for i = 1:numel(obj.renderers_)
+          if numel(obj.listeners_)>=(i+1)
+            delete(obj.listeners_{i+1});
+          end
+          obj.listeners_{i+1} = ...
+            addlistener(obj.renderers(i),'updatedOut',...
+                            @(h,evt) obj.renderSlice);
+        
+      end;
+      obj.renderSlice;
+      end;
     end;
     function out = get.renderers(obj)
       out = obj.renderers_;
@@ -133,7 +145,13 @@ classdef sliceViewer < guiTools.uipanel
       out = obj.sliceControl.selectedSlice;
     end;
       
-      
+    function set.zoom(obj,val)
+      obj.zoom_ = val;
+    end;
+    
+    function val = get.zoom(obj)
+      val = obj.zoom_;
+    end;
       
     
     function initializeControlTab(obj)
@@ -188,25 +206,29 @@ classdef sliceViewer < guiTools.uipanel
     
     
     function updateImgAspect(obj)
-      if ~isempty(obj.volume.aspect)
-        switch obj.volume.axis
-          case 1, daspect(obj.ax,1./obj.volume.aspect([2 3 1]));
-          case 2, daspect(obj.ax,1./obj.volume.aspect([1 3 2]));
-          case 3, daspect(obj.ax,1./obj.volume.aspect([1 2 3]));
+      if ~isempty(obj.renderers)
+        switch obj.axis
+          case 1, daspect(obj.ax,1./obj.renderers(1).aspect([2 3 1]));
+          case 2, daspect(obj.ax,1./obj.renderers(1).aspect([1 3 2]));
+          case 3, daspect(obj.ax,1./obj.renderers(1).aspect([1 2 3]));
         end
       end;
     end
     
     function renderSlice(obj)      
       
-      axes(obj.ax); cla;            
+      axes(obj.ax); 
+      
+      
+      cla;            
       for i = 1:numel(obj.renderers)
         obj.renderers(i).renderSlice(obj.ax,false,...
                                 'axis',obj.axis,'slice',obj.slice);
       end;
       axis off tight;
       
-      %obj.updateImgAspect;
+      obj.updateImgAspect;
+            
     end
 
     function setVisible(obj,i)

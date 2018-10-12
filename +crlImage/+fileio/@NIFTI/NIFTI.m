@@ -1,4 +1,4 @@
-classdef NIFTI < crlEEG.fileio.baseobj
+classdef NIFTI < crlBase.baseFileObj
   % crlEEG front end object for the NIFTI toolbox
   %
   %
@@ -34,22 +34,24 @@ classdef NIFTI < crlEEG.fileio.baseobj
       p.parse(varargin{:});
       
       %% Call Parent Constructor
-      obj = obj@crlEEG.fileio.baseobj(p.Results.fname,p.Results.fpath,...
+      obj = obj@crlBase.baseFileObj(p.Results.fname,p.Results.fpath,...
         p.Unmatched);
       
+      if nargin>0
       %% Assign Properties
       % If a crlEEG.fileio.NRRD object was
       if isa(varargin{1},'crlEEG.fileio.NIFTI')
         obj.copyFields(varargin{1});
         return;
       end;
+      end
       
       % If the NRRD file exists on disk, read the header.
       if obj.existsOnDisk
         obj.read;
       else
         disp(['NRRD not located on disk. Creating empty object']);
-      end;
+      end;      
     end
     
     function read(obj)
