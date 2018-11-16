@@ -13,7 +13,7 @@ classdef griddedImage < labelledArray
   %
   %
   
-  
+
   properties (Dependent=true)    
     sizes
     dimType
@@ -21,7 +21,7 @@ classdef griddedImage < labelledArray
     directions  
     orientation
     aspect
-    data       % Unhidden access to .array
+    data       % Public access to .array
     GUI        % Currently unused
     spaceGrid  
   end
@@ -53,7 +53,9 @@ classdef griddedImage < labelledArray
     end
     
     function p = view(obj,varargin)
-      p = crlImage.gui.sliceViewer(obj,varargin{:});
+      if ~isempty(obj.array)
+        p = crlImage.gui.sliceViewer(obj,varargin{:});
+      end;
     end
     
     obj = testThis(obj);
@@ -141,23 +143,39 @@ classdef griddedImage < labelledArray
   
   methods (Access=protected)
     
-    function [out,varargout] = subcopy(obj,varargin)
-      
+    function [out,varargout] = subcopy(obj,varargin)     
       out = subcopy@labelledArray(obj,varargin{:}); 
       out.spaceGrid = out.spaceGrid.copy;
       out.spaceGrid.dimensions = out.dimensions;      
     end;
     
+    %% Set/Get For Array
+    %%%%%%%%%%%%%%%%%%%%
     function setArray(obj,val)
-      setArray@labelledArray(obj,val);
+      setArray@labelledArray(obj,val);      
+      obj.checkGridConsistency;
     end;
     
     function val = getArray(obj)
       val = getArray@labelledArray(obj);
     end;
     
+    %% Set/Get For Dimensions
+    %%%%%%%%%%%%%%%%%%%%%%%%%
     function setDimensions(obj,val)
       setDimensions@labelledArray(obj,val);
+      obj.checkGridConsistency;
+    end; %% END setDimensions(obj,val)
+    
+    function val = getDimensions(obj)
+      val = getDimensions@labelledArray(obj);
+    end;
+    
+    function checkGridConsistency(obj)
+      if isempty(obj.dimensions)
+        return;
+      end;
+      
       if isempty(obj.spaceGrid)
         obj.spaceGrid = spatialGrid(obj.dimensions(obj.spaceDims_));
         return;
@@ -170,11 +188,7 @@ classdef griddedImage < labelledArray
         % Changing dimensionality resets the spaceGrid
         obj.spaceGrid = spatialGrid(obj.dimensions(obj.spaceDims_));
       end        
-    end; %% END setDimensions(obj,val)
-    
-    function val = getDimensions(obj)
-      val = getDimensions@labelledArray(obj);
-    end;
+    end
     
   end
   

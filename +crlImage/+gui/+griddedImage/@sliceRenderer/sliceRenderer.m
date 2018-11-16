@@ -221,7 +221,7 @@ classdef sliceRenderer < handle
       
       s.type = '()';
       s.subs = idx;
-      obj.sliceImage_ = subsref(obj.originalImage_,s);
+      obj.sliceImage_ = squeeze(subsref(obj.originalImage_.data,s));
     end
     
     function renderSlice(obj,varargin)
@@ -242,7 +242,7 @@ classdef sliceRenderer < handle
       axes(ax);
       if p.Results.clearfirst, cla; end;
       hold on;
-      img = squeeze(obj.sliceImage_.data);
+      img = obj.sliceImage_; %squeeze(obj.sliceImage_.data);
       img = crlImage.gui.orientMRSlice(img,obj.axis,obj.originalImage_.orientation);
       [rgb, alpha] = obj.cmap.img2rgb(img);
       tmp = get(ax,'ButtonDownFcn');

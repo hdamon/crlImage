@@ -32,22 +32,22 @@ classdef newNRRD < crlImage.imageFile
      
     function writeData(fileIn,varargin)
     end
-    
-    function val = getArray(obj)
-      if isempty(obj.array_) %obj.hasData
-        try
-          crlBase.disp(['Reading Data for ' obj.fname ]);
-          obj.readData;
-          %obj.hasData = true;
-        catch
-          disp(['Error reading data for ' obj.fname]);
-          e = lasterror
-          keyboard;
-          obj.data = [];
-        end;
-      end
-      val = getArray@crlImage.imageFile(obj);      
-    end
+%     
+%     function val = getArray(obj)
+%       if isempty(obj.array_) %obj.hasData
+%         try
+%           crlBase.disp(['Reading Data for ' obj.fname ]);
+%           obj.readData;
+%           %obj.hasData = true;
+%         catch
+%           disp(['Error reading data for ' obj.fname]);
+%           e = lasterror
+%           keyboard;
+%           obj.data = [];
+%         end;
+%       end
+%       val = getArray@crlImage.imageFile(obj);      
+%     end
     
   end
   

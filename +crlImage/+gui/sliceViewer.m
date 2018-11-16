@@ -99,7 +99,7 @@ classdef sliceViewer < guiTools.uipanel
       end;
               
       % Add Listeners
-      obj.listeners_{1} = addlistener(obj.sliceControl,'updatedOut',...
+      obj.listenTo{1} = addlistener(obj.sliceControl,'updatedOut',...
                             @(h,evt) obj.renderSlice);     
       obj.renderSlice;
      
@@ -113,23 +113,26 @@ classdef sliceViewer < guiTools.uipanel
     end;
     
     function set.renderers(obj,val)
-      if ~isequal(obj.renderers_,val)        
+      if ~isequal(obj.renderers_,val)
+        % If updating renderers, update all listeners.
         obj.renderers_ = val;
         for i = 1:numel(obj.renderers_)
-          if numel(obj.listeners_)>=(i+1)
-            delete(obj.listeners_{i+1});
+          % First listener slot is reserved for the slice control
+          if numel(obj.listenTo)>=(i+1)
+            % Delete existing listener, if present
+            delete(obj.listenTo{i+1});
           end
-          obj.listeners_{i+1} = ...
+          % Add new listener
+          obj.listenTo{i+1} = ...
             addlistener(obj.renderers(i),'updatedOut',...
-                            @(h,evt) obj.renderSlice);
-        
-      end;
-      obj.renderSlice;
+            @(h,evt) obj.renderSlice);          
+        end;
+        obj.renderSlice;
       end;
     end;
     function out = get.renderers(obj)
       out = obj.renderers_;
-    end;    
+    end;
     
     function set.axis(obj,val)
       obj.sliceControl.selectedAxis = val;
@@ -203,8 +206,7 @@ classdef sliceViewer < guiTools.uipanel
     
     function resizeInternals(obj)
     end
-    
-    
+        
     function updateImgAspect(obj)
       if ~isempty(obj.renderers)
         switch obj.axis
@@ -218,8 +220,7 @@ classdef sliceViewer < guiTools.uipanel
     function renderSlice(obj)      
       
       axes(obj.ax); 
-      
-      
+            
       cla;            
       for i = 1:numel(obj.renderers)
         obj.renderers(i).renderSlice(obj.ax,false,...
