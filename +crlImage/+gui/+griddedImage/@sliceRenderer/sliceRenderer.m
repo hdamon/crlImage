@@ -16,14 +16,23 @@ classdef sliceRenderer < handle
   %   obj : Array of sliceRenderer objects, with one renderer for each
   %           object in the imageIn array.
   %
+  % Properties
+  % ----------
+  %           axis : Currently selected axis
+  %          slice : Currently selected slice
+  %         aspect : Aspect ratio of image
+  %           cmap : Image colormap
+  %   enableRender : Flag to turn rendering on/off
+  %  originalImage : 3D Volume slice is selected from
   %
-  
+  %
   
   properties (Dependent = true)
     axis
     slice
     aspect
     cmap
+    enableRender
     originalImage
   end
   
@@ -31,6 +40,7 @@ classdef sliceRenderer < handle
     axis_
     slice_
     cmap_
+    enableRender_ = 1; % Enabled by default.
     originalImage_
     sliceImage_
     listeners_
@@ -50,19 +60,18 @@ classdef sliceRenderer < handle
           % Return the input object
           obj = varargin{1};
           return;
-        end;
+        end
       end
       
       p = inputParser;
+      p.KeepUnmatched = true;
       p.addOptional('imageIn',[],@(x) isa(x,'crlImage.griddedImage'));
       p.addParameter('cmap',[],@(x) isa(x,'guiTools.widget.alphacolor'));
       p.parse(varargin{:});
       
       imageIn = p.Results.imageIn;
       cmap = p.Results.cmap;
-      
-      assert(isempty(p.Results.cmap)||(numel(p.Results.cmap)==numel(imageIn)),...
-        'Incorrect number of colormaps provided');
+     
       
       %% Recurse for Multiple Input Images
       if numel(imageIn)>1
@@ -70,27 +79,25 @@ classdef sliceRenderer < handle
           'Incorrect number of colormaps');
         obj(numel(imageIn)) = crlImage.gui.griddedImage.sliceRenderer;
         for i = 1:numel(imageIn)
-          obj(i) = crlImage.gui.griddedImage.sliceRenderer(imageIn(i),varargin{:});
-        end;
+          obj(i) = crlImage.gui.griddedImage.sliceRenderer(imageIn(i),p.Unmatched);
+        end
         return;
       end
       
       %% Instantiate Renderer for a Single Object
-      if isempty(p.Results.cmap)
+      if isempty(cmap)
         cmap = guiTools.widget.alphacolor;
-      else
-        cmap = p.Results.cmap;
-      end;
+      end
       
       obj.cmap = cmap;
       obj.originalImage = imageIn;
-      
+      obj.listeners_ = {};
     end
     
     %% Get/Set obj.originalImage
     function out = get.originalImage(obj)
       out = obj.originalImage_;
-    end;
+    end
     
     function set.originalImage(obj,val)
       % Set originalImage_ and update the appropriate listener
@@ -106,12 +113,23 @@ classdef sliceRenderer < handle
         if ~isempty(obj.cmap)&&isequal(obj.cmap.range,[0 1])
           obj.cmap.range = val.arrayRange;
         end
-      end;
+      end
+    end
+    
+    function out = get.enableRender(obj)
+        out = obj.enableRender_;
+    end
+    
+    function set.enableRender(obj,val)
+        if ~isequal(obj.enableRender_,val)
+        obj.enableRender_ = val;
+        notify(obj,'updatedOut');
+        end
     end
     
     function out = get.aspect(obj)
       out = obj.originalImage_.aspect;
-    end;
+    end
     
     function updatedInput(obj)
       % Callback when the input image is updated.
@@ -119,11 +137,11 @@ classdef sliceRenderer < handle
       % Update the slice image, then notify any listeners.
       obj.updateSlice;
       notify(obj,'updatedOut');
-    end;
+    end
     
     function out = get.cmap(obj)
       out = obj.cmap_;
-    end;
+    end
     
     function set.cmap(obj,val)
       if ~isequal(obj.cmap_,val)
@@ -133,11 +151,11 @@ classdef sliceRenderer < handle
         end
         if isequal(val.range,[0 1])&&~isempty(obj.originalImage)
           obj.cmap_.range = obj.originalImage.arrayRange;
-        end;
+        end
         obj.listeners_{1} = addlistener(obj.cmap_,'updatedOut',...
           @(h,evt) notify(obj,'updatedOut'));
       end
-    end;
+    end
     
     function set.axis(obj,val)
       
@@ -146,7 +164,7 @@ classdef sliceRenderer < handle
       
       if numel(val)==1
         val = repmat(val,1,numel(obj));
-      end;
+      end
       
       %% Multiple Objects
       if numel(obj)>1
@@ -161,17 +179,17 @@ classdef sliceRenderer < handle
         nDims = numel(obj.originalImage_.dimensions);
         assert(~isempty(val)&&ismember(val,[1:nDims]),...
           'Selected axis out of range');
-      end;
+      end
       if ~isequal(obj.axis_,val)
         obj.axis_  = val;
         obj.slice_ = ceil(obj.originalImage_.dimSize(obj.axis_)/2);
         obj.updateSlice;
       end
-    end;
+    end
     
     function out = get.axis(obj)
       out = obj.axis_;
-    end;
+    end
     
     function set.slice(obj,val)
       assert((numel(val)==1)||(numel(val)==numel(obj)),...
@@ -179,7 +197,7 @@ classdef sliceRenderer < handle
       
       if numel(val)==1
         val = repmat(val,1,numel(obj));
-      end;
+      end
       
       %% Multiple Objects
       if numel(obj)>1
@@ -193,16 +211,16 @@ classdef sliceRenderer < handle
         sMax = obj.originalImage_.dimSize(obj.axis);
         assert((val>0)&&(val<=sMax),...
           'Selected slice out of range');
-      end;
+      end
       if ~isequal(obj.slice_,val)
         obj.slice_ = val;
         obj.updateSlice;
-      end;
-    end;
+      end
+    end
     
     function out = get.slice(obj)
       out = obj.slice_;
-    end;
+    end
     
     function updateSlice(obj)
       
@@ -213,7 +231,7 @@ classdef sliceRenderer < handle
           obj(i).updateSlice;
         end
         return;
-      end;
+      end
       
       % Get a slice from the volume and store it internally
       idx = repmat({':'},1,numel(obj.originalImage_.dimensions));
@@ -225,6 +243,22 @@ classdef sliceRenderer < handle
     end
     
     function renderSlice(obj,varargin)
+      % Render the selected slice to a specified axes
+      
+      % Multi-Render
+      if numel(obj)>1
+          for i = 1:numel(obj)
+              obj(i).renderSlice(varargin{:});
+          end
+          return
+      end
+      
+      if ~obj.enableRender
+          % Only render if turned on
+          return;
+      end
+      
+      % Input Parsing
       p = inputParser;
       p.addOptional('ax',[],@(x) isa(x,'matlab.graphics.axis.Axes'));
       p.addOptional('clearfirst',false,@(x) islogical(x));
@@ -233,14 +267,14 @@ classdef sliceRenderer < handle
       p.parse(varargin{:});
       
       % Shouldn't incurr computation costs if it's not changed
-      obj.axis = p.Results.axis;
+      obj.axis  = p.Results.axis;
       obj.slice = p.Results.slice;
       
       ax = p.Results.ax;
-      if isempty(ax); figure; ax = gca; end;
+      if isempty(ax); figure; ax = gca; end
       
       axes(ax);
-      if p.Results.clearfirst, cla; end;
+      if p.Results.clearfirst, cla; end
       hold on;
       img = obj.sliceImage_; %squeeze(obj.sliceImage_.data);
       img = crlImage.gui.orientMRSlice(img,obj.axis,obj.originalImage_.orientation);
@@ -251,9 +285,30 @@ classdef sliceRenderer < handle
       hold off;
     end
     
-    function propertyGUI(obj)
+    function varargout = propertyGUI(obj,varargin)
+        % Create or raise a uipanel to edit renderer options
+        %
+        
+        if ishghandle(obj.gui_)
+            guiTools.util.parentfigure.raise(obj.gui_);
+        else
+          obj.gui_ = crlImage.gui.griddedImage.rendererGUI(varargin{:});
+          
+          obj.listeners_{end+1} = addlistener(obj.gui_,'editCMap',@(h,evt) obj.cmap_.edit);
+          obj.listeners_{end+1} = addlistener(obj.gui_,'editDispProp',@(h,evt) disp('NOT YET IMPLEMENTED'));
+          obj.listeners_{end+1} = addlistener(obj.gui_,'visUpdated',@(h,evt) obj.updateVisible(h,evt));
+        end
+        
+        if nargout>0
+            varargout{1} = obj.gui_;
+        end
+        
     end
     
+    
+    function updateVisible(obj,h,evt)
+        obj.enableRender = h.isVisible;
+    end
   end
   
 end

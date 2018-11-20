@@ -35,15 +35,15 @@ classdef sliceViewer < guiTools.uipanel
   
   properties (Hidden = true)    
     sliceControl
-  end;
+  end
   
   properties (Access=protected)
     ax_
     renderers_
     zoom_
     listeners_
-    tabCont
-    tabs
+    tabCont_
+    tabs_
     imgControls
     addRemove
   end
@@ -60,7 +60,7 @@ classdef sliceViewer < guiTools.uipanel
       p.parse(varargin{:});
       
       parent = p.Results.Parent;
-      if isempty(parent), parent = figure; end;
+      if isempty(parent), parent = figure; end
       
       volumes = p.Results.volumes;
       
@@ -68,49 +68,50 @@ classdef sliceViewer < guiTools.uipanel
       obj = obj@guiTools.uipanel('Parent',parent,p.Unmatched);
       obj.ResizeFcn = @(h,evt) obj.resizeInternals;
       
-      %% Set Two Tabs
-      obj.tabCont = uitabgroup('Parent',obj.panel);
-      obj.tabs(1) = uitab(obj.tabCont,'Title','Image');
-      obj.tabs(2) = uitab(obj.tabCont,'Title','Controls');
+      %% Set Two tabs_
+      obj.tabCont_ = uitabgroup('Parent',obj.panel);
+      obj.tabs_(1) = uitab(obj.tabCont_,'Title','Image');
+      obj.tabs_(2) = uitab(obj.tabCont_,'Title','Layers');
             
       %% Set up Plot Axis
-      obj.ax = axes('Parent',obj.tabs(1),...
+      obj.ax = axes('Parent',obj.tabs_(1),...
         'Units', 'normalized',...
         'Position', [0.02 0.11 0.96 0.87]);
       
       %% Set up Slice Control
       obj.sliceControl = guiTools.widget.selectXYZSlice(...
         volumes(1).dimSize,...
-        'Parent',obj.tabs(1),...
+        'Parent',obj.tabs_(1),...
         'Units','normalized',...
         'Position',[0.02 0 0.98 0.1]);
       
       % Initialize Renderers
       if ~isempty(p.Results.volumes)
         obj.renderers = p.Results.volumes.sliceRenderer;
-      end;
+      end
 
       % Default Color Layering
       if numel(obj.renderers)>1
         for i = 1:(numel(obj.renderers)-1)
          obj.renderers(i).cmap.transparentZero;
-        end;
+        end
         obj.renderers(end).cmap.type = 'gray';
-      end;
+      end
               
       % Add Listeners
       obj.listenTo{1} = addlistener(obj.sliceControl,'updatedOut',...
-                            @(h,evt) obj.renderSlice);     
+                            @(h,evt) obj.renderSlice); 
+      obj.initializeControlTab;
       obj.renderSlice;
      
     end
    
     function set.ax(obj,val)
       obj.ax_ = val;
-    end;
+    end
     function out = get.ax(obj)
       out = obj.ax_;
-    end;
+    end
     
     function set.renderers(obj,val)
       if ~isequal(obj.renderers_,val)
@@ -126,39 +127,52 @@ classdef sliceViewer < guiTools.uipanel
           obj.listenTo{i+1} = ...
             addlistener(obj.renderers(i),'updatedOut',...
             @(h,evt) obj.renderSlice);          
-        end;
+        end
         obj.renderSlice;
-      end;
-    end;
+      end
+    end
     function out = get.renderers(obj)
       out = obj.renderers_;
-    end;
+    end
     
     function set.axis(obj,val)
       obj.sliceControl.selectedAxis = val;
-    end;
+    end
     function out = get.axis(obj)
       out = obj.sliceControl.selectedAxis;
     end
     
     function set.slice(obj,val)
       obj.sliceControl.selectedSlice = val;
-    end;
+    end
     function out = get.slice(obj)
       out = obj.sliceControl.selectedSlice;
-    end;
+    end
       
     function set.zoom(obj,val)
       obj.zoom_ = val;
-    end;
+    end
     
     function val = get.zoom(obj)
       val = obj.zoom_;
-    end;
+    end
       
     
     function initializeControlTab(obj)
       % Should configure the control tab of the viewer.
+      
+      if ~isempty(obj.imgControls)
+          delete(obj.imgControls)
+      end
+      
+      obj.imgControls = crlImage.gui.griddedImage.rendererGUI.empty;
+      
+      for i = 1:numel(obj.renderers)
+          obj.imgControls(i) = obj.renderers(i).propertyGUI(...
+                                   'Parent',obj.tabs_(2),...
+                                   'Units','normalized',...
+                                   'Position',[0.02 0.98-i*0.11 0.98 0.1]);
+      end
       
 %       if ~isempty(obj.imgControls)
 %         delete(obj.imgControls)
@@ -173,7 +187,7 @@ classdef sliceViewer < guiTools.uipanel
 %       
 %       for i = 1:numel(prop)
 %         obj.imgControls(i) = uitools.util.imgDispProp(...
-%           'Parent',obj.tabs(2),...
+%           'Parent',obj.tabs_(2),...
 %           'Units','normalized',...
 %           'Origin',[0.02 0.98-(i*0.11)],...
 %           'Size',[0.98 0.1],...
@@ -189,13 +203,13 @@ classdef sliceViewer < guiTools.uipanel
 %       end;
 %       
 %       obj.addRemove(1) = uicontrol('Style','pushbutton',...
-%         'Parent',obj.tabs(2),...
+%         'Parent',obj.tabs_(2),...
 %         'Units','normalized',...
 %         'Position',[0.02 0.02 0.47 0.05],...
 %         'String','Add Layer');
 %       
 %       obj.addRemove(2) = uicontrol('Style','pushbutton',...
-%         'Parent',obj.tabs(2),...
+%         'Parent',obj.tabs_(2),...
 %         'Units','normalized',...
 %         'Position',[0.51 0.02 0.47 0.05],...
 %         'String','Remove Layer');
@@ -214,22 +228,22 @@ classdef sliceViewer < guiTools.uipanel
           case 2, daspect(obj.ax,1./obj.renderers(1).aspect([1 3 2]));
           case 3, daspect(obj.ax,1./obj.renderers(1).aspect([1 2 3]));
         end
-      end;
+      end
     end
     
     function renderSlice(obj)      
-      
       axes(obj.ax); 
             
       cla;            
-      for i = 1:numel(obj.renderers)
-        obj.renderers(i).renderSlice(obj.ax,false,...
+      for i = 0:(numel(obj.renderers)-1)
+        % Render in reverse order
+        idx = numel(obj.renderers)-i;
+        obj.renderers(idx).renderSlice(obj.ax,false,...
                                 'axis',obj.axis,'slice',obj.slice);
-      end;
+      end
       axis off tight;
       
-      obj.updateImgAspect;
-            
+      obj.updateImgAspect;     
     end
 
     function setVisible(obj,i)
@@ -240,8 +254,6 @@ classdef sliceViewer < guiTools.uipanel
           obj.imgControls(i).isVisible;
       end
     end
-
-
     
   end
   

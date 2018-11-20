@@ -1,8 +1,8 @@
-classdef newNRRD < crlImage.imageFile
+classdef newNRRD < crlImage.imageFile & dynamicprops
    
   properties (Constant, Hidden=true)
     validExts = {'.nrrd', '.nhdr'};
-  end;
+  end
   
   methods
     

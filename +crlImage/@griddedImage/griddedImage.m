@@ -12,8 +12,7 @@ classdef griddedImage < labelledArray
   %
   %
   %
-  
-
+ 
   properties (Dependent=true)    
     sizes
     dimType
@@ -32,14 +31,13 @@ classdef griddedImage < labelledArray
     spaceGrid_    
     renderer_
     GUI_       % Currently unused
-    
   end
   
   methods
     
     function obj = griddedImage(image,varargin)
           
-      if ~exist('image','var'), image = []; end;
+      if ~exist('image','var'), image = []; end
      
       p = inputParser;
       p.KeepUnmatched = true;
@@ -53,9 +51,9 @@ classdef griddedImage < labelledArray
     end
     
     function p = view(obj,varargin)
-      if ~isempty(obj.array)
+      if ~isempty(obj(1).array)
         p = crlImage.gui.sliceViewer(obj,varargin{:});
-      end;
+      end
     end
     
     obj = testThis(obj);
@@ -63,20 +61,20 @@ classdef griddedImage < labelledArray
     %% spaceGrid is redirected to the protected property
     function g = get.spaceGrid(obj)
       g = obj.spaceGrid_;
-    end;
+    end
     
     function set.spaceGrid(obj,val)
       obj.spaceGrid_ = val;
-    end;
+    end
     
     %%
     function out = get.orientation(obj)
       out = obj.spaceGrid_.orientation;
-    end;
+    end
     
     function set.orientation(obj,val)
       obj.spaceGrid_.orientation = val;
-    end;
+    end
     
     function out = get.origin(obj)
       out = obj.spaceGrid_.origin;
@@ -84,15 +82,15 @@ classdef griddedImage < labelledArray
     
     function set.origin(obj,val)
       obj.spaceGrid_.origin = val;
-    end;
+    end
     
     function out = get.directions(obj)
       out = obj.spaceGrid_.directions;
-    end;
+    end
     
     function set.directions(obj,val)
       obj.spaceGrid_.directions = val;
-    end;
+    end
     
     function out = get.aspect(obj)
       out = obj.spaceGrid_.aspect;
@@ -100,36 +98,32 @@ classdef griddedImage < labelledArray
     
     function set.aspect(obj,val)
       obj.spaceGrid_.aspect = val;
-    end;
-    
+    end
     
     function t = get.dimType(obj)
       t = obj.dimType_;
-    end;
+    end
     
     function set.dimType(obj,val)
       obj.dimType_ = val;
-    end;
-    
-
+    end
     
     function d = get.data(obj)
       d = obj.array;
-    end;
+    end
     
     function set.data(obj,val)
       obj.array = val;
-    end;
+    end
     
     function s = get.sizes(obj)
       s = obj.dimSize;
-    end;
+    end
     
     function set.sizes(obj,val)
       obj.dimSize = val;
     end
     
- 
     function rendererOut = sliceRenderer(obj)
       % Return the appropriate slice renderer
       %
@@ -147,39 +141,39 @@ classdef griddedImage < labelledArray
       out = subcopy@labelledArray(obj,varargin{:}); 
       out.spaceGrid = out.spaceGrid.copy;
       out.spaceGrid.dimensions = out.dimensions;      
-    end;
+    end
     
     %% Set/Get For Array
     %%%%%%%%%%%%%%%%%%%%
     function setArray(obj,val)
       setArray@labelledArray(obj,val);      
       obj.checkGridConsistency;
-    end;
+    end
     
     function val = getArray(obj)
       val = getArray@labelledArray(obj);
-    end;
+    end
     
     %% Set/Get For Dimensions
     %%%%%%%%%%%%%%%%%%%%%%%%%
     function setDimensions(obj,val)
       setDimensions@labelledArray(obj,val);
       obj.checkGridConsistency;
-    end; %% END setDimensions(obj,val)
+    end %% END setDimensions(obj,val)
     
     function val = getDimensions(obj)
       val = getDimensions@labelledArray(obj);
-    end;
+    end
     
     function checkGridConsistency(obj)
       if isempty(obj.dimensions)
         return;
-      end;
+      end
       
       if isempty(obj.spaceGrid)
         obj.spaceGrid = spatialGrid(obj.dimensions(obj.spaceDims_));
         return;
-      end;
+      end
       
       if numel(obj.spaceGrid.dimensions)==numel(obj.dimensions)
         % Same dimensionality can keep the origin and directions

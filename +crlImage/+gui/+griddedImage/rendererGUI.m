@@ -1,13 +1,13 @@
 classdef rendererGUI < guiTools.uipanel
   % Image Property GUI 
   %
+  % GUI interface for crlImage.gui.griddedImage.sliceRenderer objects
   %
-  
   
   properties (Dependent = true)
     name
     isVisible    
-  end;
+  end
   
   properties (Access=protected)
     nameUI
@@ -40,7 +40,7 @@ classdef rendererGUI < guiTools.uipanel
         'String',p.Results.name,...
         'Units','normalized',...
         'Position',[0.02 0.5 0.3 0.48],...
-        'Callback',@(h,evt) notify(obj,'nameUpdated'));
+        'Callback',@(h,evt) notify(obj,'nameUpdated',SpecialEventDataClass(obj.nameUI.String)));
       obj.textUI   = uicontrol('Style','text',...
         'Parent',obj.panel,...
         'String', 'Visible:',...
@@ -70,7 +70,7 @@ classdef rendererGUI < guiTools.uipanel
        
     function out = get.isVisible(obj)
       out = obj.visUI.Value;
-    end;
+    end
   end
     
   methods (Access=protected,Static=true)

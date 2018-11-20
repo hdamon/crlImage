@@ -8,12 +8,10 @@ function [matlabtype] = getMatlabType(nrrdObj)
 % Part of the cnlEEG Project
 %
 
-assert(isfield(nrrdObj.header,'type')&&...
-        ~isempty(nrrdObj.header.type),...
-        'NRRD type field is missing from header');
+
 
 % Determine the matlabtype
-switch (nrrdObj.header.type)
+switch (nrrdObj.type)
  case {'signed char', 'int8', 'int8_t'}
   matlabtype = 'int8';
   

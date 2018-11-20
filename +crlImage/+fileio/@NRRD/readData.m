@@ -6,10 +6,10 @@ returnToDir = onCleanup(@() cd(tmpDir));
 cd(nrrdObj.fpath);
 
 %% Open the appropriate file, and make sure it's closed when done.
-if ~isempty(nrrdObj.data_fname)
-  crlEEG.disp(['Reading data from separate file: ' nrrdObj.data_fname]);
-  fid = fopen(nrrdObj.data_fname,'rb');
-  assert(fid>0,['Failed to open NRRD data file ' nrrdObj.data_fname]);
+if isfield(nrrdObj.header,'data_fname')&&~isempty(nrrdObj.header.data_fname)
+  crlBase.disp(['Reading data from separate file: ' nrrdObj.header.data_fname]);
+  fid = fopen(nrrdObj.header.data_fname,'rb');
+  assert(fid>0,['Failed to open NRRD data file ' nrrdObj.header.data_fname]);
 else
   fid = fopen(nrrdObj.fname,'rb');
   assert(fid>0,['Failed to open NRRD file ' nrrdObj.fname]);
@@ -23,20 +23,23 @@ else
 end;
 closeFile = onCleanup(@() fclose(fid));
 
-assert(~isequal(nrrdObj.encoding,'???') && ...
-       ~isequal(nrrdObj.dimension,'???') && ...
-       ~isequal(nrrdObj.sizes,'???'), ...
+assert(~isempty(nrrdObj.header.encoding) && ...
+       ~isempty(nrrdObj.header.dimension) && ...
+       ~isempty(nrrdObj.header.sizes) && ...
+       ~isequal(nrrdObj.header.encoding,'???') && ...
+       ~isequal(nrrdObj.header.dimension,'???') && ...
+       ~isequal(nrrdObj.header.sizes,'???'), ...
        'Required header fields are missing');
-if (isequal(nrrdObj.endian,'???')), nrrdObj.endian = 'little'; end;     
+if (isequal(nrrdObj.header.endian,'???')), nrrdObj.header.endian = 'little'; end;     
      
-assert(numel(nrrdObj.sizes)==nrrdObj.dimension,...
+assert(numel(nrrdObj.header.sizes)==nrrdObj.header.dimension,...
         'Sizes field does not match dimension field');
  
       
-typecast = nrrdObj.matlabtype;
+typecast = nrrdObj.getMatlabType;
 %typecast = [nrrdObj.matlabtype '=>' nrrdOBj.matlabtype];
 
-switch (nrrdObj.encoding)
+switch (nrrdObj.header.encoding)
  case {'raw'}
   
   data = fread(fid, inf, typecast);
@@ -74,12 +77,12 @@ switch (nrrdObj.encoding)
   assert(false, 'Unsupported encoding')
 end
 
-data = adjustEndian(data,nrrdObj.endian);
+data = adjustEndian(data,nrrdObj.header.endian);
 
-assert(numel(data)==prod(nrrdObj.sizes),...
-  'Data size does not match nrrdObj.sizes');
+assert(numel(data)==prod(nrrdObj.header.sizes),...
+  'Data size does not match nrrdObj.header.sizes');
 
-nrrdObj.data = reshape(data,nrrdObj.sizes);
+nrrdObj.data = reshape(data,nrrdObj.header.sizes);
 
 end
 
