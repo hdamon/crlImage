@@ -3,7 +3,7 @@ classdef (Abstract) imageFile < crlBase.baseFileObj & crlImage.griddedImage
 %
 % Combines crlBase.baseFileObj and crlImage.griddedImage
 %
-%
+
   properties
     header    
   end
@@ -16,7 +16,7 @@ classdef (Abstract) imageFile < crlBase.baseFileObj & crlImage.griddedImage
     
     function obj = imageFile(varargin)
    % Test Functions
-      fnameFcn = @(x) isempty(x)||isa(x,'crlImage.fileio.newNRRD')||...
+      fnameFcn = @(x) isempty(x)||isa(x,'crlImage.imageFile')||...
         (ischar(x) && ~ismember(lower(x),{'readonly'}));
       fpathFcn = @(x) isempty(x) || ...
         (ischar(x) && ~ismember(lower(x),{'readonly'}));
@@ -34,7 +34,7 @@ classdef (Abstract) imageFile < crlBase.baseFileObj & crlImage.griddedImage
       obj = obj@crlImage.griddedImage;      
       if obj.existsOnDisk
         obj.read;
-      end;            
+      end         
     end
 
   end
@@ -42,7 +42,7 @@ classdef (Abstract) imageFile < crlBase.baseFileObj & crlImage.griddedImage
   methods (Access=protected)
     
     function val = getArray(obj)
-      % Method called by labelledArray whenever obj.array is set
+      % Method called by labelledArray whenever obj.array is requested
       %
 
       if isempty(obj.array_) 

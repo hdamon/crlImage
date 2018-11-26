@@ -36,8 +36,8 @@ classdef iEEGElectrodeMap < crlEEG.fileio.NRRD
     function obj = iEEGElectrodeMap(fname,fpath,varargin)
       
       %% Input Parsing      
-      if ~exist('fname','var'), fname = []; end;
-      if ~exist('fpath','var'), fpath = []; end;
+      if ~exist('fname','var'), fname = []; end
+      if ~exist('fpath','var'), fpath = []; end
       
       % Parsing Functions
       fnameFcn = @(x) (ischar(x)&& ~ismember(lower(x),{'gridtype'}))||...
@@ -48,7 +48,7 @@ classdef iEEGElectrodeMap < crlEEG.fileio.NRRD
       p = inputParser;
       p.addOptional('fname',[],fnameFcn);
       p.addOptional('fpath',[],fpathFcn);
-      p.addParamValue('gridType','grid',@(x) ischar(x));
+      p.addParameter('gridType','grid',@(x) ischar(x));
       p.parse(varargin{:});
                   
       %% Initialize parent Object
@@ -59,7 +59,7 @@ classdef iEEGElectrodeMap < crlEEG.fileio.NRRD
         obj.gridType = fname.gridType;
       else
         obj.gridType = gridType;
-      end;
+      end
       
     end
     
@@ -82,7 +82,7 @@ classdef iEEGElectrodeMap < crlEEG.fileio.NRRD
         obj.gridType = val;
       else
         error('Invalid invasive electrode type')
-      end;
+      end
     end
     
     function out = get.nElectrodes(obj)
@@ -103,13 +103,13 @@ classdef iEEGElectrodeMap < crlEEG.fileio.NRRD
       out = zeros(obj.nElectrodes,3);      
       for j = 1:length(enum)
         i = enum(j);
-        if (i~=0), 
+        if (i~=0) 
           idxE = idxE+1;
           Q = obj.data(:)==i;        
           out(idxE,:) = mean(p(Q,:),1);       
 
-        end;
-        if any(isnan(out)), keyboard; end;
+        end
+        if any(isnan(out)), keyboard; end
       end
     end
      
@@ -126,7 +126,7 @@ classdef iEEGElectrodeMap < crlEEG.fileio.NRRD
       out = cell(obj.nElectrodes,1);
       for i = 1:length(enum)
         out{i} = find(obj.data(:)==enum(i));
-      end;
+      end
             
     end
     
@@ -154,8 +154,8 @@ classdef iEEGElectrodeMap < crlEEG.fileio.NRRD
             out{i} = obj.gridSpace.getNodesFromCells(Q1);
           case 'depth'
           out{i} = obj.gridSpace.getNodesFromCells(Q);
-        end;
-      end;              
+        end
+      end             
     end    
     
     function out = get.elecLabels(obj)
@@ -163,6 +163,7 @@ classdef iEEGElectrodeMap < crlEEG.fileio.NRRD
       %
       %
       allnums = unique(obj.data(:));
+      out = cell(1,obj.nElectrodes);
       for i = 1:obj.nElectrodes
         out{i} = [obj.namePrefix num2str(allnums(i+1))];
       end
@@ -173,9 +174,9 @@ classdef iEEGElectrodeMap < crlEEG.fileio.NRRD
       % electrode
       
       % Use an anisotropic grid by default
-      if ~exist('type','var')||isempty(type),
+      if ~exist('type','var')||isempty(type)
         type = 'aniso';
-      end;
+      end
       
       altConn = obj.gridSpace.getAlternateGrid;
       altMat = altConn.getGridConnectivity;
@@ -214,7 +215,7 @@ classdef iEEGElectrodeMap < crlEEG.fileio.NRRD
         else
           % Depth electrodes are assumed to just be made of metal.
           out(Q) = obj.cond_Metal;
-        end;
+        end
         
       end
       

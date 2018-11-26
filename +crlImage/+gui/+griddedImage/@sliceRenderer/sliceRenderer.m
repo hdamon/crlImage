@@ -23,7 +23,8 @@ classdef sliceRenderer < handle
   %         aspect : Aspect ratio of image
   %           cmap : Image colormap
   %   enableRender : Flag to turn rendering on/off
-  %  originalImage : 3D Volume slice is selected from
+  %  originalImage : 3D Volume (griddedImage object) that the slice is
+  %                    selected from.
   %
   %
   
@@ -72,7 +73,6 @@ classdef sliceRenderer < handle
       imageIn = p.Results.imageIn;
       cmap = p.Results.cmap;
      
-      
       %% Recurse for Multiple Input Images
       if numel(imageIn)>1
         assert(isempty(cmap)||ismember(numel(cmap),[1 numel(imageIn)]),...
@@ -116,6 +116,8 @@ classdef sliceRenderer < handle
       end
     end
     
+    %% Set/Get enableRender
+    %%%%%%%%%%%%%%%%%%%%%%%
     function out = get.enableRender(obj)
         out = obj.enableRender_;
     end
@@ -127,18 +129,15 @@ classdef sliceRenderer < handle
         end
     end
     
+    
+    %% Get aspect
+    %%%%%%%%%%%%%
     function out = get.aspect(obj)
       out = obj.originalImage_.aspect;
     end
-    
-    function updatedInput(obj)
-      % Callback when the input image is updated.
-      %
-      % Update the slice image, then notify any listeners.
-      obj.updateSlice;
-      notify(obj,'updatedOut');
-    end
-    
+       
+    %% Set/Get obj.cmap
+    %%%%%%%%%%%%%%%
     function out = get.cmap(obj)
       out = obj.cmap_;
     end
@@ -157,6 +156,8 @@ classdef sliceRenderer < handle
       end
     end
     
+    %% Set/Get obj.axis
+    %%%%%%%%%%%%%%%%%%%
     function set.axis(obj,val)
       
       assert((numel(val)==1)||(numel(val)==numel(obj)),...
@@ -191,6 +192,8 @@ classdef sliceRenderer < handle
       out = obj.axis_;
     end
     
+    %% Set/Get obj.slice
+    %%%%%%%%%%%%%%%%%%%%
     function set.slice(obj,val)
       assert((numel(val)==1)||(numel(val)==numel(obj)),...
         'Invalid number of axis definitions');
@@ -222,10 +225,20 @@ classdef sliceRenderer < handle
       out = obj.slice_;
     end
     
-    function updateSlice(obj)
-      
+    
+    function updatedInput(obj)
+      % Callback when the input image is updated.
+      %
+      % Update the slice image, then notify any listeners.
+      obj.updateSlice;
+      notify(obj,'updatedOut');
+    end
+    
+    function updateSlice(obj) 
       % Update All Slices In A Stack
-      %  This should probably never actually get called?
+      
+      
+      %  This loop should probably never actually get called?
       if numel(obj)>1
         for i = 1:numel(obj)
           obj(i).updateSlice;
@@ -247,7 +260,8 @@ classdef sliceRenderer < handle
       
       % Multi-Render
       if numel(obj)>1
-          for i = 1:numel(obj)
+          % Always render in reverse order (First slice on top)
+          for i = numel(obj):-1:1
               obj(i).renderSlice(varargin{:});
           end
           return

@@ -231,19 +231,33 @@ classdef sliceViewer < guiTools.uipanel
       end
     end
     
-    function renderSlice(obj)      
-      axes(obj.ax); 
-            
-      cla;            
-      for i = 0:(numel(obj.renderers)-1)
-        % Render in reverse order
-        idx = numel(obj.renderers)-i;
-        obj.renderers(idx).renderSlice(obj.ax,false,...
-                                'axis',obj.axis,'slice',obj.slice);
-      end
-      axis off tight;
+    function renderSlice(obj)  
+      % Render all slices in the current viewer
+      %
       
+      axes(obj.ax); 
+         
+      % Delete existing images afterwards to prevent strobing
+      toDelete = allchild(obj.ax);
+            
+      % Renderers internally iterate
+      %
+      % This does, however, assume uniform typing for the renderers. While
+      % this is currently the case (all of type
+      % crlImage.gui.griddedImage.sliceRenderer), it might be better to
+      % change this in the future.
+      %
+      obj.renderers.renderSlice(obj.ax,false,'axis',obj.axis,'slice',obj.slice);
+      
+%       for i = numel(obj.renderers):-1:1
+%         % Render in reverse order
+%         obj.renderers(i).renderSlice(obj.ax,false,...
+%                                 'axis',obj.axis,'slice',obj.slice);
+%       end
+      axis off tight;
+      delete(toDelete);
       obj.updateImgAspect;     
+      drawnow;
     end
 
     function setVisible(obj,i)
