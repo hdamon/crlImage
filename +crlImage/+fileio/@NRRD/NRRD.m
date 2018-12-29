@@ -20,9 +20,13 @@ classdef NRRD < crlImage.imageFile & dynamicprops
     function read(obj)      
       obj.readHeader;      
     end
-    
-    [matlabtype] = getMatlabType(nrrdObj);
-    
+       
+  end
+  
+  methods (Static=true)
+    type = getMatlabType(headerType);
+    header = staticReadHeader(fname,fpath);
+    data   = staticReadData(fname,fpath,header);
   end
   
   methods (Access=protected)

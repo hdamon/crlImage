@@ -191,14 +191,14 @@ classdef NRRD < crlBase.baseFileObj & matlab.mixin.Copyable
         % header filename, to make sure nothing changes.
         obj.data_fname_stored = fname;
         obj.data_fname_matching_fname = obj.fname;
-      end;
+      end
     end
     
     function fname = get.data_fname(obj)
       
       if isequal(obj.fext,'.nrrd')
         fname = [];
-      elseif isequal(obj.fext,'.nhdr');
+      elseif isequal(obj.fext,'.nhdr')
         if isempty(obj.data_fname_stored)
           fname = obj.DEFAULT_DATA_FNAME;
         else

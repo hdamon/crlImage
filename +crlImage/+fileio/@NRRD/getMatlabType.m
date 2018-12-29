@@ -1,4 +1,4 @@
-function [matlabtype] = getMatlabType(nrrdObj)
+function [matlabtype] = getMatlabType(headerType)
 % Return the appropriate matlab data type, based on nrrdObj.type
 %
 % function [matlabtype] = getMatlabType(nrrdObj)
@@ -6,12 +6,12 @@ function [matlabtype] = getMatlabType(nrrdObj)
 %
 %
 
-assert(isfield(nrrdObj.header,'type')&&...
-        ~isempty(nrrdObj.header.type),...
-        'NRRD type field is missing from header');
+% assert(isfield(nrrdObj.header,'type')&&...
+%         ~isempty(nrrdObj.header.type),...
+%         'NRRD type field is missing from header');
 
 % Determine the matlabtype
-switch (nrrdObj.header.type)
+switch lower(headerType)
  case {'signed char', 'int8', 'int8_t'}
   matlabtype = 'int8';
   
