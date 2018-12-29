@@ -5,7 +5,7 @@ classdef (Abstract) imageFile < crlBase.baseFileObj & crlImage.griddedImage
 %
 
   properties
-    header    
+    header % Stores raw header information from the image file.
   end
       
   properties (Hidden=true)
@@ -37,6 +37,20 @@ classdef (Abstract) imageFile < crlBase.baseFileObj & crlImage.griddedImage
       end         
     end
 
+    %% Read and Write Methods Mandated by crlBase.baseFileObj
+    function read(obj)
+      obj.readHeader;
+    end
+    
+    function write(obj)
+      if ~obj.readOnly
+        obj.writeHeader;
+        obj.writeData;
+      else
+        warning([obj.fname ' is flagged as read only']);
+      end
+    end
+    
   end
   
   methods (Access=protected)
@@ -55,10 +69,17 @@ classdef (Abstract) imageFile < crlBase.baseFileObj & crlImage.griddedImage
         
   end
    
-  methods (Abstract)
-    
+  %% Abstract Methods
+  methods (Abstract)   
+    %readHeader(obj);
     readData(obj); 
+    %writeHeader(obj);
+    %writeData(obj);
   end  
   
+  methods (Abstract,Static=true)
+    header = staticReadHeader(fname,fpath);
+    data = staticReadData(fname,fpath,header);
+  end
        
 end
