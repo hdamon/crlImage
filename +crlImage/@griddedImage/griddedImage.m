@@ -166,6 +166,11 @@ classdef griddedImage < labelledArray
     end
     
     function checkGridConsistency(obj)
+      % Check that obj is a valid griddedImage object
+      %
+      % checkGridConsistency(obj)
+      %
+      
       if isempty(obj.dimensions)
         return;
       end
